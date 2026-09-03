@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
+
+# Project specific
+temp/
+outputs/
+data/voice_prompts/*.wav
+data/voice_prompts/*.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
