@@ -1,0 +1,11 @@
+flask>=3.0
+requests>=2.31
+torch>=2.1
+transformers>=4.40
+diffusers>=0.27
+accelerate>=0.20
+soundfile>=0.12
+numpy>=1.24
+openai-whisper>=20231117
+# Optional for better subtitle fonts (Bengali/Hindi):
+# pip install pydbus   (Linux only, for font discovery)
