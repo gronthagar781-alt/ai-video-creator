@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Creator — বাংলা ও হিন্দি ভিডিও</title>
+    <style>
+        :root {
+            --bg: #0f0f1e;
+            --surface: #1a1a2e;
+            --surface2: #16213e;
+            --accent: #e94560;
+            --accent2: #0f3460;
+            --text: #eee;
+            --text-dim: #999;
+            --success: #4ecca3;
+            --warning: #f5a623;
+            --border: #2a2a4a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--surface2), var(--surface));
+            padding: 20px 30px;
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .badge {
+            background: var(--accent);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .step-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .step-card.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.15);
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--accent2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .step-card.active .step-number { background: var(--accent); }
+        .step-card.done .step-number { background: var(--success); }
+        .step-title { font-size: 1.1rem; font-weight: 600; }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+        input[type="text"], textarea, select {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #ff5577; transform: translateY(-1px); }
+        .btn:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--accent2); }
+        .scene-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+        .scene-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .scene-badge {
+            background: var(--accent2);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        .scene-field { margin-bottom: 8px; }
+        .scene-field label { font-size: 0.75rem; margin-bottom: 3px; }
+        .scene-field textarea { min-height: 50px; font-size: 0.9rem; }
+        .scene-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+        .progress-container { margin: 20px 0; }
+        .progress-bar {
+            height: 24px;
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        .progress-label {
+            margin-top: 8px;
+            text-align: center;
+            color: var(--text-dim);
+        }
+        .result-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .result-container video {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+        .download-btn {
+            display: inline-block;
+            background: var(--success);
+            color: var(--bg);
+            text-decoration: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 18px; height: 18px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .info-banner {
+            background: var(--surface2);
+            border-left: 3px solid var(--warning);
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎬 AI Video Creator</h1>
+    <span class="badge">বাংলা · हिन्दी</span>
+    <span class="badge" style="background: var(--success);">FREE</span>
+</div>
+
+<div class="container">
+
+    <div class="info-banner">
+        💡 শুধু একটি টপিক দিন। AI স্টোরি তৈরি করবে → আপনি রিভিউ করবেন → ভয়েস-ওভার, ভিডিও ও সাবটাইটেল সব অটোমেটিক তৈরি হবে।
+    </div>
+
+    <div class="step-card active" id="card-input">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">টপিক ও সেটিংস দিন</div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label>ভাষা (Language)</label>
+                <select id="language">
+                    <option value="bn">বাংলা (Bengali)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+            </div>
+            <div>
+                <label>ভিডিওর দৈর্ঘ্য (Length)</label>
+                <select id="length">
+                    <option value="short">শর্ট (Short ~60s)</option>
+                    <option value="long">ফুল লেন্থ (Long ~3-5 min)</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label>ভয়েস (Voice)</label>
+                <select id="voice_key">
+                    <option value="">ডিফল্ট (Default)</option>
+                </select>
+            </div>
+            <div>
+                <label>ভিডিও স্টাইল (Style)</label>
+                <select id="style">
+                    <option value="cinematic">সিনেমাটিক (Cinematic)</option>
+                    <option value="realistic">রিয়ালিস্টিক (Realistic)</option>
+                    <option value="animation">অ্যানিমেশন (Animation)</option>
+                    <option value="fantasy">ফ্যান্টাসি (Fantasy)</option>
+                    <option value="documentary">ডকুমেন্টারি (Documentary)</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>টপিক (Topic) — কী নিয়ে ভিডিও বানাতে চান?</label>
+            <textarea id="topic" placeholder="যেমন: সৌরজগতের রহস্য / महानगर पलायन / গঙ্গা নদীর ইতিহাস"></textarea>
+        </div>
+        <button class="btn" id="btn-generate" onclick="generateStory()">
+            📝 স্টোরি তৈরি করুন
+        </button>
+    </div>
+
+    <div class="step-card hidden" id="card-review">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">স্টোরি রিভিউ ও এডিট</div>
+        </div>
+        <div id="story-title-display" style="margin-bottom: 15px; font-size: 1.2rem; font-weight: 600;"></div>
+        <div id="scenes-container"></div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn" id="btn-approve" onclick="approveStory()">
+                ✅ এপ্রুভ করুন ও ভিডিও তৈরি শুরু করুন
+            </button>
+            <button class="btn btn-secondary" onclick="generateStory()">
+                🔄 আবার তৈরি করুন
+            </button>
+        </div>
+    </div>
+
+    <div class="step-card hidden" id="card-progress">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">ভিডিও তৈরি হচ্ছে...</div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+            </div>
+            <div class="progress-label" id="progress-label">শুরু হচ্ছে...</div>
+        </div>
+    </div>
+
+    <div class="step-card hidden" id="card-result">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">ভিডিও প্রস্তুত!</div>
+        </div>
+        <div class="result-container">
+            <video id="result-video" controls></video>
+            <br>
+            <a class="download-btn" id="download-link" href="#">
+                ⬇️ ডাউনলোড করুন
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let projectId = null;
+let taskId = null;
+let pollTimer = null;
+
+async function init() {
+    try {
+        const resp = await fetch('/api/voices');
+        const voices = await resp.json();
+        const sel = document.getElementById('voice_key');
+        for (const [key, v] of Object.entries(voices)) {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = `${v.desc || key} (${v.lang}/${v.gender})`;
+            sel.appendChild(opt);
+        }
+    } catch(e) { console.warn('Could not load voices:', e); }
+}
+
+async function generateStory() {
+    const topic = document.getElementById('topic').value.trim();
+    if (!topic) { alert('টপিক দিন!'); return; }
+
+    const btn = document.getElementById('btn-generate');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> স্টোরি তৈরি হচ্ছে...';
+
+    try {
+        const resp = await fetch('/api/story/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                topic,
+                language: document.getElementById('language').value,
+                length: document.getElementById('length').value,
+                voice_key: document.getElementById('voice_key').value,
+                style: document.getElementById('style').value,
+            }),
+        });
+        const data = await resp.json();
+
+        if (data.error) { alert('ত্রুটি: ' + data.error); return; }
+
+        projectId = data.project_id;
+        displayStory(data.story);
+    } catch(e) {
+        alert('ত্রুটি: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '📝 স্টোরি তৈরি করুন';
+    }
+}
+
+function displayStory(story) {
+    document.getElementById('story-title-display').textContent = story.title || 'শিরোনাম ছাড়া';
+
+    const container = document.getElementById('scenes-container');
+    container.innerHTML = '';
+
+    story.scenes.forEach((scene, i) => {
+        const card = document.createElement('div');
+        card.className = 'scene-card';
+        card.innerHTML = `
+            <div class="scene-card-header">
+                <span class="scene-badge">দৃশ্য ${i + 1}</span>
+                <span class="scene-badge" style="background: ${emotionColor(scene.emotion)}">${scene.emotion || 'neutral'}</span>
+            </div>
+            <div class="scene-field">
+                <label>ন্যারেশন (ভয়েস-ওভার টেক্সট)</label>
+                <textarea id="scene-narration-${i}">${escapeHtml(scene.narration || '')}</textarea>
+            </div>
+            <div class="scene-field">
+                <label>ভিজ্যুয়াল প্রম্পট (ইংরেজিতে)</label>
+                <textarea id="scene-visual-${i}">${escapeHtml(scene.visual_prompt || '')}</textarea>
+            </div>
+            <div class="scene-actions">
+                <button class="btn btn-secondary btn-sm" onclick="saveSceneEdit(${i})">💾 সংরক্ষণ</button>
+                <button class="btn btn-secondary btn-sm" onclick="regenerateScene(${i})">🔄 AI দিয়ে পরিবর্তন</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    document.getElementById('card-input').classList.remove('active');
+    document.getElementById('card-input').classList.add('done');
+    document.getElementById('card-review').classList.remove('hidden');
+    document.getElementById('card-review').classList.add('active');
+}
+
+function emotionColor(emo) {
+    const map = {
+        happy: '#4ecca3', sad: '#5a8fd8', excited: '#e94560',
+        dramatic: '#f5a623', calm: '#7eb8da', neutral: '#555',
+    };
+    return map[emo] || '#555';
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+async function saveSceneEdit(idx) {
+    const narration = document.getElementById(`scene-narration-${idx}`).value;
+    const visual = document.getElementById(`scene-visual-${idx}`).value;
+
+    await fetch('/api/story/update_scene', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            project_id: projectId,
+            scene_index: idx,
+            narration,
+            visual_prompt: visual,
+        }),
+    });
+    alert('✅ সংরক্ষিত হয়েছে');
+}
+
+async function regenerateScene(idx) {
+    const instruction = prompt(`দৃশ্য ${idx+1} এর জন্য নির্দেশ দিন:\nযেমন: "আরো তথ্যবহুল করো" বা "শুরুতে একটা প্রশ্ন যোগ করো"`);
+    if (!instruction) return;
+
+    try {
+        const resp = await fetch('/api/story/edit_scene', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                project_id: projectId,
+                scene_index: idx,
+                instruction,
+            }),
+        });
+        const data = await resp.json();
+        if (data.error) { alert(data.error); return; }
+
+        document.getElementById(`scene-narration-${idx}`).value = data.scene.narration || '';
+        document.getElementById(`scene-visual-${idx}`).value = data.scene.visual_prompt || '';
+        alert('✅ দৃশ্য আপডেট হয়েছে');
+    } catch(e) { alert('ত্রুটি: ' + e.message); }
+}
+
+async function approveStory() {
+    const btn = document.getElementById('btn-approve');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> শুরু হচ্ছে...';
+
+    try {
+        const resp = await fetch('/api/story/approve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                project_id: projectId,
+                voice_key: document.getElementById('voice_key').value,
+                style: document.getElementById('style').value,
+                burn_subs: true,
+            }),
+        });
+        const data = await resp.json();
+        if (data.error) { alert(data.error); return; }
+
+        taskId = data.task_id;
+
+        document.getElementById('card-review').classList.remove('active');
+        document.getElementById('card-review').classList.add('done');
+        document.getElementById('card-progress').classList.remove('hidden');
+        document.getElementById('card-progress').classList.add('active');
+
+        pollProgress();
+    } catch(e) {
+        alert('ত্রুটি: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✅ এপ্রুভ করুন ও ভিডিও তৈরি শুরু করুন';
+    }
+}
+
+function pollProgress() {
+    pollTimer = setInterval(async () => {
+        try {
+            const resp = await fetch(`/api/task/${taskId}`);
+            const task = await resp.json();
+
+            document.getElementById('progress-fill').style.width = task.progress + '%';
+            document.getElementById('progress-fill').textContent = task.progress + '%';
+            document.getElementById('progress-label').textContent = task.step || '';
+
+            if (task.status === 'done') {
+                clearInterval(pollTimer);
+                showResult(task.result_path);
+            } else if (task.status === 'error') {
+                clearInterval(pollTimer);
+                alert('ত্রুটি: ' + (task.error || 'অজানা'));
+            }
+        } catch(e) { }
+    }, 2000);
+}
+
+function showResult(filename) {
+    document.getElementById('card-progress').classList.remove('active');
+    document.getElementById('card-progress').classList.add('done');
+    document.getElementById('card-result').classList.remove('hidden');
+    document.getElementById('card-result').classList.add('active');
+
+    const video = document.getElementById('result-video');
+    const link = document.getElementById('download-link');
+    const url = `/download/${filename}`;
+
+    video.src = url;
+    link.href = url;
+    link.download = filename;
+}
+
+init();
+</script>
+
+</body>
+</html>
