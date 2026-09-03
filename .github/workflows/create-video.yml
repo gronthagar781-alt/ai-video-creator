@@ -1,0 +1,81 @@
+name: Create AI Video
+
+# এই workflow টি GitHub-এর ফ্রি সার্ভারে ভিডিও বানাবে
+# আপনাকে কিছু করতে হবে না — শুধু "Run workflow" চাপুন
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'টপিক (Topic) — কী নিয়ে ভিডিও বানাবেন?'
+        required: true
+        default: 'সুন্দরবনের বাঘ'
+      language:
+        description: 'ভাষা (Language) — bn = বাংলা, hi = हिन्दी'
+        required: true
+        default: 'bn'
+        type: choice
+        options:
+          - bn
+          - hi
+      length:
+        description: 'দৈর্ঘ্য (Length) — short বা long'
+        required: true
+        default: 'short'
+        type: choice
+        options:
+          - short
+          - long
+
+jobs:
+  create-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-core fonts-noto-cjk
+
+      - name: 📦 Install Python packages
+        run: |
+          pip install -q gTTS requests
+          pip install -q openai-whisper
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -q transformers
+
+      - name: 📦 Install Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh -o /tmp/ollama_install.sh
+          chmod +x /tmp/ollama_install.sh
+          /tmp/ollama_install.sh
+
+      - name: 🚀 Start Ollama & Download model
+        run: |
+          ollama serve &
+          sleep 5
+          ollama pull qwen2.5:3b
+
+      - name: 🎬 Create Video
+        env:
+          VIDEO_TOPIC: ${{ github.event.inputs.topic }}
+          VIDEO_LANGUAGE: ${{ github.event.inputs.language }}
+          VIDEO_LENGTH: ${{ github.event.inputs.length }}
+        run: |
+          python create_video.py
+
+      - name: 📤 Upload Video
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-output
+          path: /tmp/output/*.mp4
+          retention-days: 30
